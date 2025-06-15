@@ -13,7 +13,7 @@ app = Flask(__name__)
 # CORS für alle Routen aktivieren
 # Dies ist notwendig, damit dein Frontend (Carrd) auf dein Backend zugreifen kann,
 # da sie auf verschiedenen Domänen liegen werden.
-CORS(app, resources={r"/chatbot": {"origins": "https://www.deinaiagent.de", "methods": ["GET", "HEAD", "POST", "OPTIONS"], "allow_headers": ["Content-Type", "Authorization"]}}))
+CORS(app, resources={r"/chatbot": {"origins": "https://www.deinaiagent.de", "methods": ["GET", "HEAD", "POST", "OPTIONS"], "allow_headers": ["Content-Type", "Authorization"]}})
 
 # Initialisiere den OpenAI Client mit deinem API-Key
 # Der API-Key wird aus der Umgebungsvariablen geladen (dank load_dotenv())
