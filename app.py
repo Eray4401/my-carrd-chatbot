@@ -20,7 +20,7 @@ CORS(app)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Diese Route empfängt die Nachrichten von deinem Frontend (Web-Chat-Widget)
-@app.route('/chatbot', methods=['POST'])
+@app.route('/chatbot', methods=['POST', 'OPTIONS'])
 def chatbot_response():
     # Hole die Nachricht vom Benutzer und den Konversationsverlauf aus der JSON-Anfrage
     data = request.json
