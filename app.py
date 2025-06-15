@@ -22,10 +22,15 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # Diese Route empfängt die Nachrichten von deinem Frontend (Web-Chat-Widget)
 @app.route('/chatbot', methods=['POST', 'OPTIONS'])
 def chatbot_response():
-    # Hole die Nachricht vom Benutzer und den Konversationsverlauf aus der JSON-Anfrage
+    # FÜGE DIESEN BLOCK HIER EIN:
+    if request.method == 'OPTIONS':
+        # Flask-CORS sollte die Header setzen, wir geben nur einen 200 OK zurück
+        return '', 200
+    # AB HIER GEHT DEIN BESTEHENDER CODE WEITER:
     data = request.json
     user_message = data.get('message')
-    conversation_history = data.get('history', []) # Standardmäßig eine leere Liste, falls kein Verlauf gesendet wird
+    conversation_history = data.get('history', [])
+   
 
     # Überprüfe, ob eine Nachricht gesendet wurde
     if not user_message:
