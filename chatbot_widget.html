@@ -1,0 +1,197 @@
+<style>
+    /* CSS für das Chat-Widget */
+    #chatbot-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 350px; /* Breite des Chatfensters */
+        height: 500px; /* Höhe des Chatfensters */
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        z-index: 1000; /* Stellt sicher, dass das Widget über anderen Elementen liegt */
+    }
+
+    #chatbot-header {
+        background-color: #007bff; /* Header-Farbe (Blau) */
+        color: white;
+        padding: 15px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        font-size: 1.1em;
+        font-weight: bold;
+        text-align: center;
+        cursor: pointer; /* Zeigt an, dass der Header klickbar ist */
+    }
+
+    #chatbot-messages {
+        flex-grow: 1;
+        padding: 15px;
+        overflow-y: auto; /* Scrollbar, wenn Nachrichten überlaufen */
+        background-color: #f9f9f9;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chatbot-message {
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        max-width: 80%;
+        word-wrap: break-word; /* Lange Wörter umbrechen */
+    }
+
+    .user-message {
+        align-self: flex-end; /* Rechts ausrichten */
+        background-color: #e0f7fa; /* Hellblau für Nutzer */
+        color: #333;
+    }
+
+    .bot-message {
+        align-self: flex-start; /* Links ausrichten */
+        background-color: #e6e6e6; /* Hellgrau für Bot */
+        color: #333;
+    }
+
+    #chatbot-input-container {
+        display: flex;
+        padding: 10px;
+        border-top: 1px solid #eee;
+        background-color: #fff;
+    }
+
+    #chatbot-input {
+        flex-grow: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-right: 10px;
+        font-size: 1em;
+    }
+
+    #chatbot-send-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 15px;
+        cursor: pointer;
+        font-size: 1em;
+    }
+
+    #chatbot-send-button:hover {
+        background-color: #0056b3;
+    }
+
+    /* Optional: Für ein minimiertes/maximiertes Verhalten */
+    #chatbot-container.minimized {
+        height: 60px; /* Nur Header sichtbar */
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    #chatbot-container.minimized #chatbot-messages,
+    #chatbot-container.minimized #chatbot-input-container {
+        display: none;
+    }
+
+</style>
+
+<div id="chatbot-container">
+    <div id="chatbot-header">
+        KI-Chatbot
+    </div>
+    <div id="chatbot-messages">
+        <div class="bot-message chatbot-message">Hallo! Wie kann ich Ihnen heute bei Ihren Fragen zu KI-Chatbots und Sprachagenten helfen?</div>
+    </div>
+    <div id="chatbot-input-container">
+        <input type="text" id="chatbot-input" placeholder="Nachricht eingeben...">
+        <button id="chatbot-send-button">Senden</button>
+    </div>
+</div>
+
+<script>
+    // JavaScript für die Chatbot-Logik
+    const chatInput = document.getElementById('chatbot-input');
+    const sendButton = document.getElementById('chatbot-send-button');
+    const chatMessages = document.getElementById('chatbot-messages');
+    const chatHeader = document.getElementById('chatbot-header');
+    const chatContainer = document.getElementById('chatbot-container');
+
+    // !!! WICHTIG: Ersetze DIESE URL durch die URL deines gehosteten Backends !!!
+    // Wenn du lokal testest, bleibt es http://localhost:5000/chatbot
+    // Nach dem Hosting wird es z.B. https://dein-chatbot-backend.com/chatbot
+    const API_URL = 'https://ki-chatbot-service.onrender.com'; // <-- DIESE ZEILE WIRD GLEICH GEÄNDERT
+
+    // Konversationsverlauf im Browser speichern, um Kontext zu behalten
+    let conversationHistory = [];
+
+    // Funktion zum Hinzufügen einer Nachricht zum Chatfenster
+    function addMessage(sender, message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('chatbot-message');
+        messageDiv.classList.add(sender + '-message');
+        messageDiv.textContent = message;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight; // Zum neuesten Nachricht scrollen
+    }
+
+    // Funktion zum Senden der Nachricht an das Backend
+    async function sendMessage() {
+        const message = chatInput.value.trim();
+        if (message === '') return;
+
+        addMessage('user', message);
+        chatInput.value = ''; // Eingabefeld leeren
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: message, history: conversationHistory }),
+            });
+
+            if (!response.ok) {
+                // Wenn die Antwort nicht OK ist (z.B. 404, 500)
+                const errorData = await response.json();
+                console.error('API Error:', errorData);
+                addMessage('bot', `Entschuldigung, es gab ein Problem: ${errorData.response || 'Unbekannter Fehler'}`);
+                return;
+            }
+
+            const data = await response.json();
+            addMessage('bot', data.response);
+            conversationHistory = data.history; // Aktualisiere den Konversationsverlauf
+
+        } catch (error) {
+            console.error('Fehler beim Senden der Nachricht:', error);
+            addMessage('bot', 'Entschuldigung, ich kann derzeit keine Verbindung herstellen. Bitte versuchen Sie es später erneut.');
+        }
+    }
+
+    // Event Listener für den Senden-Button
+    sendButton.addEventListener('click', sendMessage);
+
+    // Event Listener für die Enter-Taste im Eingabefeld
+    chatInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    // Optional: Funktionalität zum Minimieren/Maximieren des Chatbots
+    chatHeader.addEventListener('click', function() {
+        chatContainer.classList.toggle('minimized');
+    });
+
+    // Initialisiere den Chatverlauf beim Laden der Seite
+    // Hier kannst du auch den Start-Prompt des Bots setzen
+    // conversationHistory.push({"role": "assistant", "content": "Hallo! Wie kann ich Ihnen heute bei Ihren Fragen zu KI-Chatbots und Sprachagenten helfen?"});
+
+</script>
